@@ -7,14 +7,18 @@ import {MyGovernor} from "../src/MyGovernor.sol";
 import {Target} from "../src/Target.sol";
 import {TimeLock} from "../src/TimeLock.sol";
 import {GovToken} from "../src/GovToken.sol";
+import {DeployDao} from "../script/DeployDao.s.sol";
 
 contract GovernorTest is Test {
+    DeployDao daoDeployer;
     MyGovernor governor;
     Target target;
     TimeLock timeLock;
     GovToken govToken;
 
-    address public USER = makeAddr("USER");
+    // address public USER = makeAddr("USER");
+    // test pubk owner
+    address public USER = 0xbfae728Cf6D20DFba443c5A297dC9b344108de90;
     uint256 public constant INITIAL_SUPPLY = 100 ether;
     uint256 public constant MIN_DELAY = 3600; // 1 hour, after a vote is passed
     uint256 public constant VOTING_DELAY = 1; // 1 block, blocks till a proposal is active
@@ -28,27 +32,29 @@ contract GovernorTest is Test {
     address[] public targets;
 
     function setUp() public {
-        govToken = new GovToken();
-        govToken.mint(USER, INITIAL_SUPPLY);
+        daoDeployer = new DeployDao();
+        (govToken, timeLock, governor, target) = daoDeployer.run();
+        // govToken = new GovToken();
+        // govToken.mint(USER, INITIAL_SUPPLY);
 
-        vm.startPrank(USER);
-        govToken.delegate(USER); // to allow ourselves to vote
-        timeLock = new TimeLock(MIN_DELAY, proposers, executors, USER); // everyone can propose and execute
-        governor = new MyGovernor(govToken, timeLock);
+        // vm.startPrank(USER);
+        // govToken.delegate(USER); // to allow ourselves to vote
+        // timeLock = new TimeLock(MIN_DELAY, proposers, executors, USER); // everyone can propose and execute
+        // governor = new MyGovernor(govToken, timeLock);
 
-        // roles
-        bytes32 proposerRole = timeLock.PROPOSER_ROLE();
-        bytes32 executorRole = timeLock.EXECUTOR_ROLE();
-        bytes32 adminRole = timeLock.DEFAULT_ADMIN_ROLE();
+        // // roles
+        // bytes32 proposerRole = timeLock.PROPOSER_ROLE();
+        // bytes32 executorRole = timeLock.EXECUTOR_ROLE();
+        // bytes32 adminRole = timeLock.DEFAULT_ADMIN_ROLE();
 
-        timeLock.grantRole(proposerRole, address(governor));
-        timeLock.grantRole(executorRole, address(0)); // anyone can execute
-        timeLock.revokeRole(adminRole, USER); // remove the default admin role => no more admin
-        vm.stopPrank();
+        // timeLock.grantRole(proposerRole, address(governor));
+        // timeLock.grantRole(executorRole, address(0)); // anyone can execute
+        // timeLock.revokeRole(adminRole, USER); // remove the default admin role => no more admin
+        // vm.stopPrank();
 
-        target = new Target(address(this));
-        target.transferOwnership(address(timeLock)); // timeLock owns the DAO and DAO owns the timeLock
-            // timeLock ultimately controls the box
+        // target = new Target(address(this));
+        // target.transferOwnership(address(timeLock)); // timeLock owns the DAO and DAO owns the timeLock
+        //     // timeLock ultimately controls the box
     }
 
     function testCantUpdateTargetWithoutGovernance() public {
