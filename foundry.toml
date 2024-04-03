@@ -2,9 +2,8 @@
 src = "src"
 out = "out"
 libs = ["lib"]
+remappings = ["@openzeppelin/contracts=lib/openzeppelin-contracts/contracts"]
 
 [rpc_endpoints]
-allfeat-testnet = "https://harmonie-endpoint-02.allfeat.io"
-allfeat-local = "http://127.0.0.1:9944"
-
-# See more config options https://github.com/foundry-rs/foundry/blob/master/crates/config/README.md#all-options
+allfeat-testnet = "https://harmonie-endpoint-02.allfeat.io/"
+allfeat-local = "http://127.0.0.1:9944/"
