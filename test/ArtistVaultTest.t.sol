@@ -23,10 +23,12 @@ contract ArtistVaultTest is Test {
         
         // Make the test contract the owner of the GovToken to control minting
         // govToken.transferOwnership(address(this));
+
+        string memory projectName = "MyHackathonMusicalProject";
         
         // Deploy ArtistVault contract with the address of the GovToken contract
         vm.prank(artist); // Simulate the artist's address calling the constructor
-        artistVault = new ArtistVault(baseTokenURI, address(govToken), daoManager);
+        artistVault = new ArtistVault(baseTokenURI, address(govToken), daoManager, projectName);
     }
 
     // Test the mint function with two users

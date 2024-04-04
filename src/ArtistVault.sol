@@ -25,9 +25,13 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
     mapping(address => uint256) public balances;
     uint256 totalGovTokenBalance = 0; // Initialiser la balance totale à 0
 
+    string public _projectName;
+
+    event ProjectCreated(address indexed owner, string projectName);
+
     // Constructor with baseTokenURI and address of GovToken
     // Must be called by the artist, only him can create a project.
-    constructor(string memory baseTokenURI, address govTokenAddress, address daoManager) 
+    constructor(string memory baseTokenURI, address govTokenAddress, address daoManager, string memory projectName) 
         ERC721("ArtistVaultNFT", "AVNFT") Ownable(msg.sender) {
 
         // Define NFT tokenURI
@@ -39,6 +43,9 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
         _ownerArtist = msg.sender;
 
         _daoManager = daoManager;
+        _projectName = projectName;
+
+        emit ProjectCreated(msg.sender, projectName);
 
     }
 
