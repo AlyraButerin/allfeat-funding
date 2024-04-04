@@ -12,6 +12,10 @@ contract ArtistVaultTest is Test {
     address artist = address(0x1);
     string baseTokenURI = "ipfs://QmYnjbjTKew5zj2MwuGJ4fGfntZPGWanT3qcru2zzTLAGS/";
 
+    address daoManager =  address(0xA);
+
+    uint256 initialBalance = 1 ether;
+
     // Setup function to deploy the GovToken and ArtistVault contracts before each test
     function setUp() public {
         // Deploy GovToken contract
@@ -22,7 +26,7 @@ contract ArtistVaultTest is Test {
         
         // Deploy ArtistVault contract with the address of the GovToken contract
         vm.prank(artist); // Simulate the artist's address calling the constructor
-        artistVault = new ArtistVault(baseTokenURI, address(govToken));
+        artistVault = new ArtistVault(baseTokenURI, address(govToken), daoManager);
     }
 
     // Test the mint function with two users
@@ -102,4 +106,45 @@ contract ArtistVaultTest is Test {
         assertEq(govTokenBalanceAfterSecondMint, mintAmount * 2, "User's GovToken balance should be updated correctly after second mint");
     }
 
+    function testTransfertBalance() public {
+        // Assurer que la balance initiale du contrat est 0
+        assertEq(address(artistVault).balance, 0, "Initial contract balance should be 0");
+
+        vm.deal(artist, 0.1 ether);
+        uint256 initialArtistBalance = artist.balance;
+
+        // Définir un utilisateur et lui donner 2 ethers pour couvrir le coût du minting
+        address user = address(0x3);
+        vm.deal(user, 2 ether);
+        uint256 mintAmount = 1 ether;
+
+        // Simuler l'utilisateur mintant un NFT
+        vm.startPrank(user);
+        artistVault.mint{value: mintAmount}(mintAmount);
+        vm.stopPrank();
+
+        // Vérifier la balance du contrat après le minting
+        uint256 expectedContractBalanceAfterMint = mintAmount;
+        assertEq(address(artistVault).balance, expectedContractBalanceAfterMint, "Contract balance should reflect the minted amount");
+
+        uint256 transferAmount = 0.5 ether;
+
+        // Simuler le daoManager faisant l'appel de transfert
+        vm.startPrank(daoManager);
+        artistVault.transfertBalance(transferAmount);
+        vm.stopPrank();
+
+        // Vérifier que l'artiste a reçu le montant de 0.5 ether
+        assertEq(artist.balance, initialArtistBalance + transferAmount, "Artist should receive the correct amount");
+
+        // Vérifier que la balance du contrat a été mise à jour après le transfert
+        uint256 expectedContractBalanceAfterTransfer = expectedContractBalanceAfterMint - transferAmount;
+        assertEq(address(artistVault).balance, expectedContractBalanceAfterTransfer, "Contract balance should be decreased by the transfer amount");
+
+        // Simuler un appel de transfert par l'artiste: doit fail:
+        vm.startPrank(artist);
+        vm.expectRevert();
+        artistVault.transfertBalance(transferAmount);
+
+    }
 }

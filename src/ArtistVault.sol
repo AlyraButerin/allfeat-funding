@@ -13,11 +13,13 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
     string private _baseTokenURI;
     GovToken public govToken; // Reference to the GovToken contract
 
-        // Initialize the artist by calling the Artists contract
+    // Initialize the artist by calling the Artists contract
     address artistsContractAddress = 0x0000000000000000000000000000000000000803;
     Artists artistsInstance = Artists(artistsContractAddress);
 
     address public _ownerArtist;
+
+    address public _daoManager;
 
     // balance des govToken
     mapping(address => uint256) public balances;
@@ -25,7 +27,7 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
 
     // Constructor with baseTokenURI and address of GovToken
     // Must be called by the artist, only him can create a project.
-    constructor(string memory baseTokenURI, address govTokenAddress) 
+    constructor(string memory baseTokenURI, address govTokenAddress, address daoManager) 
         ERC721("ArtistVaultNFT", "AVNFT") Ownable(msg.sender) {
 
         // Define NFT tokenURI
@@ -35,6 +37,8 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
         govToken = GovToken(govTokenAddress); // Initialize the GovToken instance
 
         _ownerArtist = msg.sender;
+
+        _daoManager = daoManager;
 
     }
 
@@ -78,11 +82,6 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
         return _baseURI();
     }
 
-    // Withdraw function with access control
-    function withdraw() external onlyOwner {
-        payable(owner()).transfer(address(this).balance);
-    }
-
     // Implementing the get_artist function
     function get_artist(address account) external view returns (Artists.Artist memory) {
         return artistsInstance.get_artist(account);
@@ -96,4 +95,15 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
     function getTotalGovTokenBalance() external view returns (uint256) {
         return totalGovTokenBalance;
     }
+
+    // Fonction pour transférer la balance
+    function transfertBalance(uint256 amount) external {
+        require(msg.sender == _daoManager, "only daoManager can do this action");
+        require(amount <= address(this).balance, "requested amount cannot be above contract balance.");
+
+        // Transfert du montant à _ownerArtist
+        (bool success, ) = _ownerArtist.call{value: amount}("");
+        require(success, "transfert failed.");
+    }
+
 }
