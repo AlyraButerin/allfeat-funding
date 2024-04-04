@@ -19,6 +19,10 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
 
     address public _ownerArtist;
 
+    // balance des govToken
+    mapping(address => uint256) public balances;
+    uint256 totalGovTokenBalance = 0; // Initialiser la balance totale à 0
+
     // Constructor with baseTokenURI and address of GovToken
     // Must be called by the artist, only him can create a project.
     constructor(string memory baseTokenURI, address govTokenAddress) 
@@ -41,8 +45,15 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
         // Call the mint function of the GovToken contract
         govToken.mint(msg.sender, amount);
 
-        // Mint a unique NFT for the user
-        _mintNFT(msg.sender);
+        // Update the user's GovToken balance
+        balances[msg.sender] += amount;
+        totalGovTokenBalance += amount; // Mettre à jour la balance totale
+
+        // Check if the user already owns an NFT, mint only if they don't
+        if (balanceOf(msg.sender) == 0) {
+            // Mint a unique NFT for the user
+            _mintNFT(msg.sender);
+        }
     }
 
     function _mintNFT(address to) private {
@@ -77,5 +88,12 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
         return artistsInstance.get_artist(account);
     }
 
+    function checkGovTokenBalance(address user) external view returns (uint256) {
+        return balances[user];
+    }
 
+    // Fonction pour retourner la balance totale
+    function getTotalGovTokenBalance() external view returns (uint256) {
+        return totalGovTokenBalance;
+    }
 }
