@@ -30,7 +30,7 @@ contract DeployDao is Script {
     string public constant baseTokenURI = "";
     string public constant projectName = "ACDC";
 
-    function run() external returns (GovToken, ProjectDao1) {
+    function run() external returns (GovToken, ProjectDao1, ArtistVault) {
         vm.startBroadcast(owner);
 
         govToken = new GovToken();
@@ -60,6 +60,6 @@ contract DeployDao is Script {
         console.log("Deployed Dao at block", block.number);
 
         vm.stopBroadcast();
-        return (govToken, projectDao);
+        return (govToken, projectDao, artistVault);
     }
 }

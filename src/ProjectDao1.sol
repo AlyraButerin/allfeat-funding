@@ -4,6 +4,8 @@ pragma solidity ^0.8.20;
 
 import {GovToken} from "./GovToken.sol";
 
+//@todo IMPLEMENT ROLES !!!!! and checks
+//@todo add voting delay : pending => active
 contract ProjectDao1 {
     /**
      *
@@ -76,7 +78,7 @@ contract ProjectDao1 {
 
     //@todo => make it constant and add getter
     //@todo add real value!!
-    uint256 private s_votingDelay = 1;
+    uint256 private s_votingDelay = 1; // time btw proposal and beginning of vote
     uint256 private s_voteDuration = 1;
     uint256 private s_votingPeriod;
     uint256 private s_proposalThreshold = 1; //min 1 vote power
