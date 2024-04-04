@@ -8,10 +8,12 @@ import {ProjectDao1} from "../src/ProjectDao1.sol";
 // import {Target} from "../src/Target.sol";
 // import {TimeLock} from "../src/TimeLock.sol";
 import {GovToken} from "../src/GovToken.sol";
+import {ArtistVault} from "../src/ArtistVault.sol";
 
 contract DeployDao is Script {
     GovToken public govToken;
     ProjectDao1 public projectDao;
+    ArtistVault public artistVault;
     // TimeLock public timeLock;
     // MyGovernor public governor;
     // Target public target;
@@ -25,6 +27,8 @@ contract DeployDao is Script {
     uint256 public constant MIN_DELAY = 3600; // 1 hour, after a vote is passed
     uint256 public constant VOTING_DELAY = 1; // 1 block, blocks till a proposal is active
     uint256 public constant VOTING_PERIOD = 50400;
+    string public constant baseTokenURI = "";
+    string public constant projectName = "ACDC";
 
     function run() external returns (GovToken, ProjectDao1) {
         vm.startBroadcast(owner);
@@ -37,7 +41,9 @@ contract DeployDao is Script {
 
         govToken.delegate(owner); // to allow ourselves to vote
         // timeLock = new TimeLock(MIN_DELAY, proposers, executors, owner); // everyone can propose and execute
-        projectDao = new ProjectDao1("ACDC", address(govToken));
+        projectDao = new ProjectDao1(projectName, address(govToken));
+
+        artistVault = new ArtistVault(baseTokenURI, address(govToken), address(projectDao), projectName);
 
         // roles
         // bytes32 proposerRole = timeLock.PROPOSER_ROLE();
