@@ -1,20 +1,31 @@
-// SPDX-License-Identifier: UNLICENSED
+
+// SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
 import "forge-std/Test.sol";
 import "../src/ArtistVault.sol";
-import "../src/GovToken.sol"; // Assurez-vous que le chemin vers GovToken est correct
+import "../src/GovToken.sol";
+import "../src/Artists.sol";
 
 contract ArtistVaultTest is Test {
     ArtistVault private artistVault;
     GovToken private govToken;
-    address private owner;
+    Artists private artists;
+    address private artist = address(0x1);
 
+    // Setup function to deploy contracts before each test
     function setUp() public {
-        owner = address(this); // Dans le contexte de test, `this` est le déploiyant, donc le propriétaire
-        govToken = new GovToken(); // Déployer le GovToken
-        artistVault = new ArtistVault("baseURI/", address(govToken)); // Déployer ArtistVault avec GovToken
-        govToken.transferOwnership(address(artistVault)); // Transférer la propriété de GovToken à ArtistVault, si nécessaire
+        govToken = new GovToken();
+        address artistsContractAddress = 0x0000000000000000000000000000000000000803;
+        artistVault = new ArtistVault("ipfs://QmYnjbjTKew5zj2MwuGJ4fGfntZPGWanT3qcru2zzTLAGS/", address(govToken));
+        // Additional setup if needed, e.g., minting tokens, setting roles
+    }
+
+    // Test the deployment and initial setup of the ArtistVault
+    function testDeployment() public {
+        // Verify the initial state, e.g., baseTokenURI, owner, etc.
+        assertEq(artistVault.getBaseTokenURI(), "ipfs://QmYnjbjTKew5zj2MwuGJ4fGfntZPGWanT3qcru2zzTLAGS/");
+        // Other assertions as necessary
     }
 
     function testMint() public {
@@ -42,6 +53,4 @@ contract ArtistVaultTest is Test {
 
         vm.stopPrank();
     }
-
-    // Ajoutez d'autres tests au besoin...
 }

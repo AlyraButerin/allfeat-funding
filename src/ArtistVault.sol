@@ -1,27 +1,41 @@
 // SPDX-License-Identifier: UNLICENSED
 pragma solidity ^0.8.20;
 
-import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 import "@openzeppelin/contracts/utils/ReentrancyGuard.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
 import "./GovToken.sol";
+import "./Artists.sol";
 
-contract ArtistVault is ERC20, ERC721URIStorage, ReentrancyGuard, Ownable {
+contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
     uint256 private _nftCounter;
     string private _baseTokenURI;
     GovToken public govToken; // Reference to the GovToken contract
 
+        // Initialize the artist by calling the Artists contract
+    address artistsContractAddress = 0x0000000000000000000000000000000000000803;
+    Artists artistsInstance = Artists(artistsContractAddress);
+
+    address public _ownerArtist;
+
     // Constructor with baseTokenURI and address of GovToken
+    // Must be called by the artist, only him can create a project.
     constructor(string memory baseTokenURI, address govTokenAddress) 
-        ERC721("ArtistVaultNFT", "AVNFT") {
+        ERC721("ArtistVaultNFT", "AVNFT") Ownable(msg.sender) {
+
+        // Define NFT tokenURI
         _baseTokenURI = baseTokenURI;
+
+        // Get the govToken contract.
         govToken = GovToken(govTokenAddress); // Initialize the GovToken instance
+
+        _ownerArtist = msg.sender;
+
     }
 
     // Mint function for both GovToken and a unique NFT
-    function mint(uint256 amount) external payable nonReentrant {
+    function mint(uint256 amount) external payable nonReentrant { 
         require(msg.value == amount, "Amount sent does not match the mint amount");
 
         // Call the mint function of the GovToken contract
@@ -49,13 +63,19 @@ contract ArtistVault is ERC20, ERC721URIStorage, ReentrancyGuard, Ownable {
         _baseTokenURI = baseTokenURI;
     }
 
-    // Override required due to multiple inheritance.
-    function _beforeTokenTransfer(address from, address to, uint256 tokenId) internal override(ERC20, ERC721) {
-        super._beforeTokenTransfer(from, to, tokenId);
+    function getBaseTokenURI() external view returns (string memory) {
+        return _baseURI();
     }
 
     // Withdraw function with access control
     function withdraw() external onlyOwner {
         payable(owner()).transfer(address(this).balance);
     }
+
+    // Implementing the get_artist function
+    function get_artist(address account) external view returns (Artists.Artist memory) {
+        return artistsInstance.get_artist(account);
+    }
+
+
 }
