@@ -4,8 +4,35 @@ pragma solidity ^0.8.20;
 
 import {GovToken} from "./GovToken.sol";
 
-//@todo IMPLEMENT ROLES !!!!! and checks
-//@todo add voting delay : pending => active
+///@todo : REORG ORDER OF FUNCTIONS!
+/**
+ * @title ProjectDao1
+ * @notice DAO contract to manage proposals, votes and execution
+ * @notice workflow :
+ * 1. the artist creates a proposal to retrieve funds for an action (buy a bass, pay a studio, etc.)
+ * 2. the funder votes for or against the proposal
+ * 3. anyone can call the closeProposal function to end the vote (need to be active and before the end of the attributed period)
+ * 4. if the proposal is successful, anyone can execute it
+ * 5. at the moment only one action is possible : transfer of funds from the ArtistVault to the artist
+ *
+ * FOR THE POC the address deploying the contract is the artist, he's owner of all contracts
+ * First improvment : renonce ownership of the contracts
+ * (at the moment only the DAO can transfer fund from Vault to the artist, so we didn't focus on ownership)
+ *
+ * FOR THIS POC, things missing to implement later :
+ * - quorum and threshold of votes.
+ * - staking to lock funds or snapshot mechanism.
+ * - queue mechanism to delay execution.
+ * - roles and access control.
+ * - a special vote to blame the artist and get funds back (if the artist doesn't respect the project anouncement).
+ * - reward mechanism to close a proposal and execute it.
+ *
+ * @dev to save storage details of a proposal are split in 2 structs : ProposalCore and ProposalVote
+ * @dev their contents are not stored but the proposal id is the hash of their content
+ * @dev you need to compute the hash of the proposal to get its id (calling hashProposal)
+ *
+ * @dev !!!! FOR THE POC : all time variables are set to : 1 (to be able to test quickly and  interact quickly with the contract)
+ */
 contract ProjectDao1 {
     /**
      *
@@ -44,7 +71,7 @@ contract ProjectDao1 {
 
     /**
      *
-     *              STORAGE
+     *              TYPES
      *
      */
     enum ProposalState {
@@ -61,6 +88,7 @@ contract ProjectDao1 {
         Abstain
     }
 
+    ///@dev details of a proposal
     struct ProposalCore {
         address proposer;
         uint256 voteStart;
@@ -68,6 +96,7 @@ contract ProjectDao1 {
         ProposalState voteState;
         uint256 etaSeconds;
     }
+    ///@dev details of a vote for a proposal
 
     struct ProposalVote {
         uint256 forVotes;
@@ -76,22 +105,24 @@ contract ProjectDao1 {
         mapping(address => bool) hasVoted;
     }
 
+    /**
+     *
+     *              STORAGE
+     *
+     */
     //@todo => make it constant and add getter
     //@todo add real value!!
-    uint256 private s_votingDelay = 1; // time btw proposal and beginning of vote
+    uint256 private s_votingDelay = 1; //.......... time btw proposal and beginning of vote
     uint256 private s_voteDuration = 1;
     uint256 private s_votingPeriod;
-    uint256 private s_proposalThreshold = 1; //min 1 vote power
+    uint256 private s_proposalThreshold = 1; //.....min 1 vote power
     string public s_name;
     GovToken private s_govToken;
 
     mapping(uint256 proposalId => ProposalCore) private _proposals;
     mapping(uint256 proposalId => ProposalVote) private _proposalVotes;
 
-    // modifier onlyGovernance() {
-    //     _checkGovernance();
-    //     _;
-    // }
+    //@todo add modifiers and role controls
     /*
      *
      *              CONSTRUCTOR
@@ -99,32 +130,37 @@ contract ProjectDao1 {
      */
 
     //@todo add the version management : EIP712(name_, version())
-    constructor(string memory name, address govToken) {
-        s_name = name;
+    constructor(string memory projectName, address govToken) {
+        s_name = projectName;
         s_govToken = GovToken(govToken);
     }
 
-    /**
-     * @dev Function to receive ETH that will be handled by the governor (disabled if executor is a third party contract)
+    /*
+     * @todo remove if not implementing special case to receive funds
      */
     receive() external payable virtual {
         revert GovernorDisabledDeposit();
     }
 
-    //@todo add fallback the same way as receive
+    //@todo add fallback the same way as receive if needed
 
     //@todo add supportsInterface
 
     /**
-     * @dev See {IGovernor-name}.
+     * @dev Gets the name of the project
      */
     function name() public view virtual returns (string memory) {
         return s_name;
     }
 
-    //@todo ass version getter
-
-    //@note ? temporary string => description
+    /**
+     * @dev function to compute the id of a proposal
+     * @param targets array of addresses of the contracts to interact with
+     * @param values array of values to send to the contracts
+     * @param calldatas array of calldatas to send to the contracts
+     * @param descriptionHash hash of the description of the proposal
+     * @return proposalId the id of the proposal
+     */
     function hashProposal(
         address[] memory targets,
         uint256[] memory values,
@@ -134,51 +170,38 @@ contract ProjectDao1 {
         return uint256(keccak256(abi.encode(targets, values, calldatas, descriptionHash)));
     }
 
+    /**
+     * @dev function to get the state of a proposal
+     * @param proposalId the id of the proposal
+     * @return the state of the proposal
+     */
     function state(uint256 proposalId) public view virtual returns (ProposalState) {
         ProposalCore storage proposal = _proposals[proposalId];
         return proposal.voteState;
     }
 
     /**
-     * @dev See {IGovernor-proposalDeadline}.
-     */
-    // function proposalDeadline(uint256 proposalId) public view virtual returns (uint256) {
-    //     return _proposals[proposalId].voteStart + _proposals[proposalId].voteDuration;
-    // }
-
-    /**
-     * @dev See {IGovernor-proposalProposer}.
+     * @dev Gets the proposer of the proposal
+     * @param proposalId the id of the proposal
+     * @return the address of the proposer
      */
     function proposalProposer(uint256 proposalId) public view virtual returns (address) {
         return _proposals[proposalId].proposer;
     }
-
-    //@todo remove for poc
-    /**
-     * @dev See {IGovernor-proposalNeedsQueuing}.
-     */
-    // function proposalNeedsQueuing(uint256) public view virtual returns (bool) {
-    //     return false;
-    // }
-
-    // /**
-    //  * @dev Amount of votes already cast passes the threshold limit.
-    //  */
-    // function _quorumReached(uint256 proposalId) internal view virtual returns (bool);
-
-    // /**
-    //  * @dev Is the proposal successful or not.
-    //  */
-    // function _voteSucceeded(uint256 proposalId) internal view virtual returns (bool);
 
     //@todo 2 types of proposal : from artist to get funds / from funder to get funds back OR other stuff
     //@todo add check _isValidDescriptionForProposer to prevent front-running of proposals
     //@todo add snapshot support
     //@todo add CHECK INVESTOR NFT to authorize vote
     /**
-     * @dev Internal propose mechanism. Can be overridden to add more logic on proposal creation.
-     *
-     * Emits a {IGovernor-ProposalCreated} event.
+     * @dev Function to allow the artist or funders to propose a new action
+     * @dev It checks if the proposer has enough votes to propose
+     * @dev It checks if the proposal is not already active
+     * @param targets array of addresses of the contracts to interact with
+     * @param values array of values to send to the contracts
+     * @param calldatas array of calldatas to send to the contracts
+     * @param description description of the proposal
+     * @return proposalId the id of the proposal
      */
     function propose(
         address[] memory targets,
@@ -186,9 +209,8 @@ contract ProjectDao1 {
         bytes[] memory calldatas,
         string memory description
     ) public returns (uint256 proposalId) {
-        // check proposal threshold
         //@todo modify getVotes to get votes at a specific timepoint
-        uint256 proposerVotes = s_govToken.balanceOf(msg.sender); //getVotes(proposer, clock() - 1);
+        uint256 proposerVotes = s_govToken.balanceOf(msg.sender);
         uint256 votesThreshold = s_proposalThreshold;
         if (proposerVotes < votesThreshold) {
             revert GovernorInsufficientProposerVotes(msg.sender, proposerVotes, votesThreshold);
@@ -223,12 +245,22 @@ contract ProjectDao1 {
      */
     //@todo add getter proposalVotes (see GovernorCountingSimple.sol)...
 
+    /**
+     * @dev function to check if an account has voted for a proposal
+     * @param proposalId the id of the proposal
+     * @param account the address of the account to check
+     * @return true if the account has voted, false otherwise
+     */
     function hasVoted(uint256 proposalId, address account) public view virtual returns (bool) {
         return _proposalVotes[proposalId].hasVoted[account];
     }
 
     /**
-     * @dev See {IGovernor-castVoteWithReason}.
+     * @dev It allows an account to vote for a proposal
+     * @param proposalId the id of the proposal
+     * @param voteChoice the choice of the vote (0 : Against, 1 : For, 2 : Abstain)
+     * @param reason the reason of the vote
+     * @return weight the weight of the vote
      */
     function castVote(uint256 proposalId, uint8 voteChoice, string calldata reason) public returns (uint256) {
         //@todo ADD CHECK tokens locked OR SNAPSHOT mechanism
@@ -269,9 +301,17 @@ contract ProjectDao1 {
 
     //@todo MODIFY CONDITIONS => check if vote is successful / for now only For > Against
     //@todo add quorum check !!
-    //@todo add queue mechanism and delay before execution
-    ///@dev end the vote to pass his state to Succeeded or Defeated or Expired
-    ///@dev should be a 'queue' function to be executed after the vote
+    //@todo replace by a queuing mechanism
+
+    /*
+     * @dev end the vote to pass his state to Succeeded or Defeated or Expired
+     * @dev anybody can call this function
+     * @dev if the proposal is successful, the state is set to Succeeded
+     * @dev if the proposal is not successful, the state is set to Defeated
+     * @dev Sould be called AFTER the end of the vote (voteStart + voteDuration)
+     * @param proposalId the id of the proposal
+     * @return the id of the proposal
+     */
     function closeProposal(uint256 proposalId) public {
         ProposalCore storage proposal = _proposals[proposalId];
 
@@ -293,7 +333,14 @@ contract ProjectDao1 {
     //@todo add a delay before execution
     //@todo think about incentive or reward for execution
     /**
-     * @dev everybody can execute a proposal if state is suceeded and the delay has passed
+     * @dev Function to execute a proposal
+     * @dev It checks if the proposal is in the state Succeeded
+     * @dev It executes the calls to the contracts
+     * @param targets array of addresses of the contracts to interact with
+     * @param values array of values to send to the contracts
+     * @param calldatas array of calldatas to send to the contracts
+     * @param descriptionHash hash of the description of the proposal
+     * @return the id of the proposal
      */
     function execute(
         address[] memory targets,
@@ -304,7 +351,9 @@ contract ProjectDao1 {
         uint256 proposalId = hashProposal(targets, values, calldatas, descriptionHash);
 
         //@todo ADD checks : time is ok,  Id exist (if not state will be Pending)
-        //@todo check array size equality
+        if (targets.length != values.length || targets.length != calldatas.length || targets.length == 0) {
+            revert GovernorInvalidProposalLength(targets.length, calldatas.length, values.length);
+        }
 
         // check if state is Succeeded
         if (_proposals[proposalId].voteState != ProposalState.Succeeded) {
@@ -330,18 +379,4 @@ contract ProjectDao1 {
     }
 
     //@todo add cancel function to cancel a proposal
-
-    /**
-     *
-     *  GETTERS
-     *
-     */
-
-    //@todo implements _isValidDescriptionForProposer to prevent front-running of proposals
-
-    // function votingDelay() public view virtual returns (uint256);
-
-    // function votingPeriod() public view virtual returns (uint256);
-
-    // function quorum(uint256 timepoint) public view virtual returns (uint256);
 }
