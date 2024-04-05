@@ -119,16 +119,16 @@
       "internal_type": "contract ArtistVault",
       "value": "0x77363Ba38216c037750457308a7464582684ee3b"
     },
-    "1": {
-      "internal_type": "contract ProjectDao1",
-      "value": "0xBc498d9E11D7fE50e1d91FDDbADE303B9A1F9E57"
-    },
     "0": {
       "internal_type": "contract GovToken",
       "value": "0xf7d316db5aFA7bA29A16D2B4505D982F147a308F"
+    },
+    "1": {
+      "internal_type": "contract ProjectDao1",
+      "value": "0xBc498d9E11D7fE50e1d91FDDbADE303B9A1F9E57"
     }
   },
-  "timestamp": 1712271595,
+  "timestamp": 1712271047,
   "chain": 441,
   "commit": "502a87a"
 }

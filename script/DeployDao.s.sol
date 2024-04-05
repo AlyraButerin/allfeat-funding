@@ -27,7 +27,7 @@ contract DeployDao is Script {
     uint256 public constant MIN_DELAY = 3600; // 1 hour, after a vote is passed
     uint256 public constant VOTING_DELAY = 1; // 1 block, blocks till a proposal is active
     uint256 public constant VOTING_PERIOD = 50400;
-    string public constant baseTokenURI = "";
+    string public constant baseTokenURI = "ipfs://bafybeibgdlobniibt4gc6iytoimq7jhg7dbghr3qqp4bpv6q2q2kiyd7om/";
     string public constant projectName = "ACDC";
 
     function run() external returns (GovToken, ProjectDao1, ArtistVault) {
