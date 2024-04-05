@@ -36,6 +36,7 @@ contract ProjectDaoTest is Test {
         govToken.mint(USER, INITIAL_SUPPLY);
 
         vm.startPrank(USER);
+
         //remove! unused
         govToken.delegate(USER); // to allow ourselves to vote
 
