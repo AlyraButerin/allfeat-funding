@@ -57,6 +57,8 @@ contract ProjectDaoTest is Test {
         uint256 amountToTransfer = 10 ether;
         string memory description = "transfer 10 to the buy a bass guitar";
         bytes memory encodedFunctionCall = abi.encodeWithSignature("transfertBalance(uint256)", amountToTransfer);
+        console.log("encodedFunctionCall (next line):");
+        console.logBytes(encodedFunctionCall);
 
         //Setup Vault context then execute dao process => ownerArtist should receive the funds at the end
         address ownerArtist = artistVault._ownerArtist();
@@ -105,6 +107,7 @@ contract ProjectDaoTest is Test {
         // console.log("ProjectDaoTest / Proposal state :", uint256(projectDao.state(proposalId)));
 
         // close prosposal to change state
+
         projectDao.closeProposal(proposalId);
         console.log("ProjectDaoTest / Proposal state :", uint256(projectDao.state(proposalId)));
 

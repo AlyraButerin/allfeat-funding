@@ -23,13 +23,12 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
 
     // balance des govToken
     mapping(address => uint256) public balances;
-    uint256 totalGovTokenBalance = 0; // Initialiser la balance totale à 0
+    uint256 totalGovTokenBalance = 0;
 
     string public _projectName;
 
     event ProjectCreated(address indexed owner, string projectName);
 
-    // Constructor with baseTokenURI and address of GovToken
     // Must be called by the artist, only him can create a project.
     constructor(string memory baseTokenURI, address govTokenAddress, address daoManager, string memory projectName) 
         ERC721("ArtistVaultNFT", "AVNFT") Ownable(msg.sender) {
@@ -38,7 +37,7 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
         _baseTokenURI = baseTokenURI;
 
         // Get the govToken contract.
-        govToken = GovToken(govTokenAddress); // Initialize the GovToken instance
+        govToken = GovToken(govTokenAddress);
 
         _ownerArtist = msg.sender;
 
@@ -58,11 +57,13 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
 
         // Update the user's GovToken balance
         balances[msg.sender] += amount;
-        totalGovTokenBalance += amount; // Mettre à jour la balance totale
+        
+        // Update total balance
+        totalGovTokenBalance += amount; 
 
         // Check if the user already owns an NFT, mint only if they don't
         if (balanceOf(msg.sender) == 0) {
-            // Mint a unique NFT for the user
+            // Mint a unique NFT for the new users
             _mintNFT(msg.sender);
         }
     }
@@ -89,7 +90,7 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
         return _baseURI();
     }
 
-    // Implementing the get_artist function
+    // Implementing the get_artist function fo Artists.sol
     function get_artist(address account) external view returns (Artists.Artist memory) {
         return artistsInstance.get_artist(account);
     }
@@ -98,17 +99,16 @@ contract ArtistVault is ERC721URIStorage, ReentrancyGuard, Ownable, Artists {
         return balances[user];
     }
 
-    // Fonction pour retourner la balance totale
+    // Returns govToken total balance
     function getTotalGovTokenBalance() external view returns (uint256) {
         return totalGovTokenBalance;
     }
 
-    // Fonction pour transférer la balance
+    // Transfers voted balance to the artist.
     function transfertBalance(uint256 amount) external {
         require(msg.sender == _daoManager, "only daoManager can do this action");
         require(amount <= address(this).balance, "requested amount cannot be above contract balance.");
 
-        // Transfert du montant à _ownerArtist
         (bool success, ) = _ownerArtist.call{value: amount}("");
         require(success, "transfert failed.");
     }
