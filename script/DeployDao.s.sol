@@ -32,7 +32,7 @@ contract DeployDao is Script {
 
     function run() external returns (GovToken, ProjectDao1, ArtistVault) {
         vm.startBroadcast(owner);
-
+        //@todo change ownership to artistVAult
         govToken = new GovToken();
 
         // @note : ?? inti_supply = tot_supply = funding target amount ??
