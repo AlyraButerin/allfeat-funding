@@ -14,9 +14,9 @@ contract ProjectDaoTest is Test {
     GovToken govToken;
     ArtistVault artistVault;
 
-    // address public USER = makeAddr("USER");
+    address public USER = makeAddr("USER");
     //     // test pubk owner
-    address public USER = 0xbfae728Cf6D20DFba443c5A297dC9b344108de90;
+    // address public USER = 0xbfae728Cf6D20DFba443c5A297dC9b344108de90;
     uint256 public constant INITIAL_SUPPLY = 100 ether;
     //     uint256 public constant MIN_DELAY = 3600; // 1 hour, after a vote is passed
     //     uint256 public constant VOTING_DELAY = 1; // 1 block, blocks till a proposal is active
@@ -47,6 +47,7 @@ contract ProjectDaoTest is Test {
         //         // target = new Target(address(this));
         //         // target.transferOwnership(address(timeLock)); // timeLock owns the DAO and DAO owns the timeLock
         //         //     // timeLock ultimately controls the box
+        vm.deal(USER, 100 ether);
     }
 
     //@todo test transfer from Vault not possible without dao
@@ -62,7 +63,7 @@ contract ProjectDaoTest is Test {
         //Prepare Vault context
         //1. user send funds to the vault via mint function and get the tokens
         vm.startPrank(USER);
-        // artistVault.mint{value: amountToTransfer}(amountToTransfer);
+        artistVault.mint{value: amountToTransfer}(amountToTransfer);
 
         console.log("ProjectDaoTest / Vault HMY balance :", address(artistVault).balance);
         console.log("ProjectDaoTest / USER token balance :", artistVault.balances(USER));
@@ -102,6 +103,11 @@ contract ProjectDaoTest is Test {
         // vm.warp(block.timestamp + 1);
         // vm.roll(block.number + 1);
         // console.log("ProjectDaoTest / Proposal state :", uint256(projectDao.state(proposalId)));
+
+        // close prosposal to change state
+
+        projectDao.closeProposal(proposalId);
+        console.log("ProjectDaoTest / Proposal state :", uint256(projectDao.state(proposalId)));
 
         // 4. execute
         bytes32 descriptionHash = keccak256(abi.encodePacked(description));
