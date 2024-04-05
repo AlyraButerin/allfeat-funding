@@ -12,20 +12,25 @@ contract ArtistVaultTest is Test {
     address artist = address(0x1);
     string baseTokenURI = "ipfs://QmYnjbjTKew5zj2MwuGJ4fGfntZPGWanT3qcru2zzTLAGS/";
 
-    address daoManager =  address(0xA);
+    address daoManager = address(0xA);
 
     uint256 initialBalance = 1 ether;
 
+    event Approval(address indexed owner, address indexed spender, uint256 value);
+    event Transfer(address indexed from, address indexed to, uint256 value);
+    event ProjectCreated(address indexed owner, string projectName);
+
     // Setup function to deploy the GovToken and ArtistVault contracts before each test
+
     function setUp() public {
         // Deploy GovToken contract
         govToken = new GovToken();
-        
+
         // Make the test contract the owner of the GovToken to control minting
         // govToken.transferOwnership(address(this));
 
         string memory projectName = "MyHackathonMusicalProject";
-        
+
         // Deploy ArtistVault contract with the address of the GovToken contract
         vm.prank(artist); // Simulate the artist's address calling the constructor
         artistVault = new ArtistVault(baseTokenURI, address(govToken), daoManager, projectName);
@@ -47,6 +52,9 @@ contract ArtistVaultTest is Test {
         vm.startPrank(artist);
         artistVault.mint{value: mintAmount}(mintAmount);
         vm.stopPrank();
+
+        // Arrange
+        uint256 initialAllowance = 10;
 
         // Check if the NFT was minted successfully for the artist
         uint256 artistBalance = artistVault.balanceOf(artist);
@@ -92,7 +100,11 @@ contract ArtistVaultTest is Test {
 
         // Check GovToken balance after first mint
         uint256 govTokenBalanceAfterFirstMint = artistVault.checkGovTokenBalance(user);
-        assertEq(govTokenBalanceAfterFirstMint, mintAmount, "User's GovToken balance should match the mint amount after first mint");
+        assertEq(
+            govTokenBalanceAfterFirstMint,
+            mintAmount,
+            "User's GovToken balance should match the mint amount after first mint"
+        );
 
         // Attempt to mint a second NFT
         vm.startPrank(user);
@@ -105,7 +117,11 @@ contract ArtistVaultTest is Test {
 
         // Check GovToken balance after second mint
         uint256 govTokenBalanceAfterSecondMint = artistVault.checkGovTokenBalance(user);
-        assertEq(govTokenBalanceAfterSecondMint, mintAmount * 2, "User's GovToken balance should be updated correctly after second mint");
+        assertEq(
+            govTokenBalanceAfterSecondMint,
+            mintAmount * 2,
+            "User's GovToken balance should be updated correctly after second mint"
+        );
     }
 
     function testTransfertBalance() public {
@@ -127,7 +143,11 @@ contract ArtistVaultTest is Test {
 
         // Vérifier la balance du contrat après le minting
         uint256 expectedContractBalanceAfterMint = mintAmount;
-        assertEq(address(artistVault).balance, expectedContractBalanceAfterMint, "Contract balance should reflect the minted amount");
+        assertEq(
+            address(artistVault).balance,
+            expectedContractBalanceAfterMint,
+            "Contract balance should reflect the minted amount"
+        );
 
         uint256 transferAmount = 0.5 ether;
 
@@ -141,12 +161,46 @@ contract ArtistVaultTest is Test {
 
         // Vérifier que la balance du contrat a été mise à jour après le transfert
         uint256 expectedContractBalanceAfterTransfer = expectedContractBalanceAfterMint - transferAmount;
-        assertEq(address(artistVault).balance, expectedContractBalanceAfterTransfer, "Contract balance should be decreased by the transfer amount");
+        assertEq(
+            address(artistVault).balance,
+            expectedContractBalanceAfterTransfer,
+            "Contract balance should be decreased by the transfer amount"
+        );
 
         // Simuler un appel de transfert par l'artiste: doit fail:
         vm.startPrank(artist);
         vm.expectRevert();
         artistVault.transfertBalance(transferAmount);
+    }
 
+    function test_TokenTransferApprovalEvent() public {
+        uint256 value = 1 ether;
+        vm.deal(artist, value);
+        uint256 initialArtistBalance = artist.balance;
+
+        // Définir un utilisateur et lui donner 2 ethers pour couvrir le coût du minting
+        address user = address(0x3);
+        // vm.deal(user, 2 ether);
+        // uint256 mintAmount = 1 ether;
+
+        vm.expectEmit(true, true, true, true);
+        emit Approval(artist, user, value);
+        vm.prank(artist);
+        govToken.approve(user, value);
+    }
+
+    function test_ProjectionCreationEvent() public {
+        // Deploy GovToken contract
+        govToken = new GovToken();
+
+        // Make the test contract the owner of the GovToken to control minting
+        // govToken.transferOwnership(address(this));
+
+        string memory projectName = "MyHackathonMusicalProject";
+
+        vm.expectEmit(true, true, true, true);
+        emit ProjectCreated(artist, projectName);
+        vm.prank(artist); // Simulate the artist's address calling the constructor
+        artistVault = new ArtistVault(baseTokenURI, address(govToken), daoManager, projectName);
     }
 }

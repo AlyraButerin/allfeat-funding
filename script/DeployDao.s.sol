@@ -4,19 +4,17 @@ pragma solidity ^0.8.18;
 
 import {Script, console} from "forge-std/Script.sol";
 import {ProjectDao1} from "../src/ProjectDao1.sol";
-// import {MyGovernor} from "../src/MyGovernor.sol";
-// import {Target} from "../src/Target.sol";
-// import {TimeLock} from "../src/TimeLock.sol";
 import {GovToken} from "../src/GovToken.sol";
 import {ArtistVault} from "../src/ArtistVault.sol";
 
+/**
+ * @dev Script to deploy all the project contracts (GovToken, ProjectDao, ArtistVault)
+ * @dev AT THE MOMENT : the artist SHOULD BE the deployer
+ */
 contract DeployDao is Script {
     GovToken public govToken;
     ProjectDao1 public projectDao;
     ArtistVault public artistVault;
-    // TimeLock public timeLock;
-    // MyGovernor public governor;
-    // Target public target;
 
     address[] public proposers;
     address[] public executors;
@@ -24,10 +22,7 @@ contract DeployDao is Script {
     address owner = 0xbfae728Cf6D20DFba443c5A297dC9b344108de90;
 
     uint256 public constant INITIAL_SUPPLY = 100 ether;
-    uint256 public constant MIN_DELAY = 3600; // 1 hour, after a vote is passed
-    uint256 public constant VOTING_DELAY = 1; // 1 block, blocks till a proposal is active
-    uint256 public constant VOTING_PERIOD = 50400;
-    string public constant baseTokenURI = "";
+    string public constant baseTokenURI = "ipfs://bafybeibgdlobniibt4gc6iytoimq7jhg7dbghr3qqp4bpv6q2q2kiyd7om/";
     string public constant projectName = "ACDC";
 
     function run() external returns (GovToken, ProjectDao1, ArtistVault) {
