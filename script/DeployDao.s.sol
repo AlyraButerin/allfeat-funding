@@ -25,33 +25,27 @@ contract DeployDao is Script {
     string public constant baseTokenURI = "ipfs://bafybeibgdlobniibt4gc6iytoimq7jhg7dbghr3qqp4bpv6q2q2kiyd7om/";
     string public constant projectName = "ACDC";
 
+    /*
+     * @dev Minimal script to deploy the project contracts
+     * @dev ownership should be managed later (artist renonce ownership ...)
+     */
     function run() external returns (GovToken, ProjectDao1, ArtistVault) {
+        //@todo check dployer address used !!!!!!!! TO CHANGE !!!!
         vm.startBroadcast(owner);
         //@todo change ownership to artistVAult
         govToken = new GovToken();
+        console.log("Deployed GovToken at address", address(govToken));
 
-        // @note : ?? inti_supply = tot_supply = funding target amount ??
-        // if Vault is owner => change minter
         govToken.mint(owner, INITIAL_SUPPLY);
 
         govToken.delegate(owner); // to allow ourselves to vote
         // timeLock = new TimeLock(MIN_DELAY, proposers, executors, owner); // everyone can propose and execute
         projectDao = new ProjectDao1(projectName, address(govToken));
+        console.log("Deployed projectDao at address", address(projectDao));
 
         artistVault = new ArtistVault(baseTokenURI, address(govToken), address(projectDao), projectName);
+        console.log("Deployed artistVault at address", address(artistVault));
 
-        // roles
-        // bytes32 proposerRole = timeLock.PROPOSER_ROLE();
-        // bytes32 executorRole = timeLock.EXECUTOR_ROLE();
-        // bytes32 adminRole = timeLock.DEFAULT_ADMIN_ROLE();
-
-        // timeLock.grantRole(proposerRole, address(governor));
-        // timeLock.grantRole(executorRole, address(0)); // anyone can execute
-        // timeLock.revokeRole(adminRole, owner); // remove the default admin role => no more admin
-
-        // target = new Target(address(this));
-        // target.transferOwnership(address(timeLock)); // timeLock owns the DAO and DAO owns the timeLock
-        // timeLock ultimately controls the box
         console.log("Deployed Dao at block", block.number);
 
         vm.stopBroadcast();

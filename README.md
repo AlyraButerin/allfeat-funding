@@ -1,67 +1,41 @@
-## Foundry
+# ALLFUNDING
 
-**Foundry is a blazing fast, portable and modular toolkit for Ethereum application development written in Rust.**
+![t](./imange.png)
 
-Foundry consists of:
+## Introduction:
 
--   **Forge**: Ethereum testing framework (like Truffle, Hardhat and DappTools).
--   **Cast**: Swiss army knife for interacting with EVM smart contracts, sending transactions and getting chain data.
--   **Anvil**: Local Ethereum node, akin to Ganache, Hardhat Network.
--   **Chisel**: Fast, utilitarian, and verbose solidity REPL.
+Allfunding is a crowdfunding solution for artists looking for financing for their project.
+Anyone can participate financially in the project by depositing funds into a liquidity pool.
+By depositing their funds, the investor receives a proof of contribution by NFT.
+The artist submits to a vote the different steps of his project which requests financing, the contributors approve and the artist can use his funds to make the dream he has nourished come true.
 
-## Documentation
+## Team:
 
-https://book.getfoundry.sh/
+Igor BOURNAZEL - Développeur
+Yoann RADENAC - Développeur
+Arnaud SENE - Développeur
+Ruddy CHAM - Consultant
 
-## Usage
+## Hackathon links:
 
-### Build
+- presentation: https://pitch.com/v/allfunding-hackathon-4cfvcq
+- logo : ipfs:/QmPGtK2BLf3o3tpKWvqiehCGqiSPqRjdp4Rp6XQJ9iqg2n/
+- front repository: https://github.com/AlyraButerin/allfeat-funding-front
+- back repository: https://github.com/AlyraButerin/allfeat-funding
+- last deployment addresses (Harmony testnet) at block 507009:
+  - GovToken: 0x461c43E1e49B0c72EECB01d0A2ebcAfFc70D422B
+  - ArtistVault: 0xe970F1b6Be86382c1D41ECE43F84f4563aCe2835
+  - ProjectDao: 0xdFbf6Daa7D37CA6E9bCCCf622833921eCDf23bAE
 
-```shell
-$ forge build
-```
+## Stack:
 
-### Test
+Blockchain:
 
-```shell
-$ forge test
-```
+- solidity / Foundry
+- testnet Harmony
 
-### Format
+Front:
 
-```shell
-$ forge fmt
-```
-
-### Gas Snapshots
-
-```shell
-$ forge snapshot
-```
-
-### Anvil
-
-```shell
-$ anvil
-```
-
-### Deploy
-
-```shell
-$ forge script script/Counter.s.sol:CounterScript --rpc-url <your_rpc_url> --private-key <your_private_key>
-```
-
-### Cast
-
-```shell
-$ cast <subcommand>
-```
-
-### Help
-
-```shell
-$ forge --help
-$ anvil --help
-$ cast --help
-```
-# allfeat-funding
+- Next.js
+- wagmi
+- raimbow kit

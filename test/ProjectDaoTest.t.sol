@@ -8,6 +8,9 @@ import {GovToken} from "../src/GovToken.sol";
 import {ArtistVault} from "../src/ArtistVault.sol";
 import {DeployDao} from "../script/DeployDao.s.sol";
 
+/*
+ * @todo add complete test suite, lack of time: only integration test for now
+ */
 contract ProjectDaoTest is Test {
     DeployDao daoDeployer;
     ProjectDao1 projectDao;
@@ -15,12 +18,9 @@ contract ProjectDaoTest is Test {
     ArtistVault artistVault;
 
     address public USER = makeAddr("USER");
-    //     // test pubk owner
+    // test pubk owner
     // address public USER = 0xbfae728Cf6D20DFba443c5A297dC9b344108de90;
     uint256 public constant INITIAL_SUPPLY = 100 ether;
-    //     uint256 public constant MIN_DELAY = 3600; // 1 hour, after a vote is passed
-    //     uint256 public constant VOTING_DELAY = 1; // 1 block, blocks till a proposal is active
-    //     uint256 public constant VOTING_PERIOD = 50400; // 1 week
 
     address[] public proposers;
     address[] public executors;
@@ -40,14 +40,8 @@ contract ProjectDaoTest is Test {
         //remove! unused
         govToken.delegate(USER); // to allow ourselves to vote
 
-        //         // timeLock.grantRole(proposerRole, address(governor));
-        //         // timeLock.grantRole(executorRole, address(0)); // anyone can execute
-        //         // timeLock.revokeRole(adminRole, USER); // remove the default admin role => no more admin
         vm.stopPrank();
 
-        //         // target = new Target(address(this));
-        //         // target.transferOwnership(address(timeLock)); // timeLock owns the DAO and DAO owns the timeLock
-        //         //     // timeLock ultimately controls the box
         vm.deal(USER, 100 ether);
     }
 
@@ -61,10 +55,10 @@ contract ProjectDaoTest is Test {
         console.log("encodedFunctionCall (next line):");
         console.logBytes(encodedFunctionCall);
 
-        //Setup Vault context then execute dao process => ownerArtist should receive the funds at the end
         address ownerArtist = artistVault._ownerArtist();
-        //Prepare Vault context
-        //1. user send funds to the vault via mint function and get the tokens
+
+        // A. Prepare Vault context
+        // 1. user send funds to the vault via mint function and get the tokens
         vm.startPrank(USER);
         artistVault.mint{value: amountToTransfer}(amountToTransfer);
 
@@ -72,12 +66,14 @@ contract ProjectDaoTest is Test {
         console.log("ProjectDaoTest / USER token balance :", artistVault.balances(USER));
         console.log("ProjectDaoTest / USER token balance :", govToken.balanceOf(USER));
         vm.stopPrank();
+
         //2. user create proposal and vote as he's alone, then execute the proposal
 
         values.push(0); // no value to send
         calldatas.push(encodedFunctionCall);
         targets.push(address(artistVault));
 
+        // B. PROPOSAL PART
         // 1. propose
         vm.startPrank(USER);
         uint256 proposalId = projectDao.propose(targets, values, calldatas, description);
@@ -116,6 +112,9 @@ contract ProjectDaoTest is Test {
         bytes32 descriptionHash = keccak256(abi.encodePacked(description));
         projectDao.execute(targets, values, calldatas, descriptionHash);
 
+        console.log("ProjectDaoTest / Vault HMY balance :", address(artistVault).balance);
+        console.log("ProjectDaoTest / USER token balance :", artistVault.balances(USER));
+        console.log("ProjectDaoTest / USER token balance :", govToken.balanceOf(USER));
         //5. check the result
         //ownerArtist should receive the funds
         assert(ownerArtist.balance == amountToTransfer);
