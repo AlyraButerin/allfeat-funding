@@ -1,6 +1,6 @@
-# ALLFUNDING
+<!-- # ALLFUNDING -->
 
-![t](./imange.png)
+<p align="center"><img width="100%" src="./images/image.png" alt="AllFunding Header"></p>
 
 ## Introduction:
 
